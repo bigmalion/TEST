@@ -1,9 +1,26 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f4f4f4;
-}
++body {
++    font-family: Arial, sans-serif;
++    margin: 0;
++    padding: 0;
++    background: #f4f4f4;
++}
++
++#calendar-grid {
++    display: grid;
++    grid-template-columns: repeat(7, 1fr);
++    gap: 5px;
++}
++
++.day {
++    min-height: 80px;
++}
++
++.lesson {
++    display: flex;
++    justify-content: space-between;
++    align-items: center;
++}
+
 
 h1 {
     text-align: center;
@@ -45,30 +62,10 @@ button {
     margin-bottom: 1rem;
 }
 
-#calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-}
-
-.day {
-    border: 1px solid #ddd;
-    min-height: 80px;
-    padding: 5px;
-    position: relative;
-}
-
 .day-header {
     font-weight: bold;
 }
 
-.lesson {
-    background: #e3f2fd;
-    border-left: 3px solid #2196F3;
-    margin: 2px 0;
-    padding: 2px;
-    font-size: 0.9rem;
-}
 .lesson button {
     float: right;
 }
