@@ -6,10 +6,27 @@ const nextBtn = document.getElementById('next');
 const toggleViewBtn = document.getElementById('toggle-view');
 const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
 const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+
+const taskEditModal = new bootstrap.Modal(document.getElementById('taskEditModal'));
+
+
 const reviewButtons = document.querySelectorAll('.review-choice');
 const editForm = document.getElementById('edit-form');
 const statsTotal = document.getElementById('stats-total');
 const statsAverage = document.getElementById('stats-average');
+const taskForm = document.getElementById('task-form');
+const tasksContainer = document.getElementById('tasks-container');
+const taskEditForm = document.getElementById('task-edit-form');
+const statsChartCanvas = document.getElementById('stats-chart');
+
+let currentReviewId = null;
+let currentEditId = null;
+let currentTaskEditId = null;
+
+let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+let timers = {};
+let history = JSON.parse(localStorage.getItem('history') || '[]');
+let statsChart = null;
 
 let currentReviewId = null;
 let currentEditId = null;
@@ -22,10 +39,128 @@ function saveLessons() {
     localStorage.setItem('lessons', JSON.stringify(lessons));
 }
 
+
+function saveTasks() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function saveHistory() {
+    localStorage.setItem('history', JSON.stringify(history));
+}
+
 function renderStats() {
     statsTotal.textContent = lessons.length;
     const avg = lessons.length ? lessons.reduce((s, l) => s + l.rate, 0) / lessons.length : 0;
     statsAverage.textContent = avg.toFixed(2);
+
+    const sorted = history.slice().sort((a,b) => a.date.localeCompare(b.date));
+    const labels = sorted.map(h => h.date);
+    const values = sorted.map(h => h.count);
+    if (statsChart) {
+        statsChart.data.labels = labels;
+        statsChart.data.datasets[0].data = values;
+        statsChart.update();
+    } else if (statsChartCanvas) {
+        statsChart = new Chart(statsChartCanvas, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Révisions', data: values, backgroundColor: '#0d6efd' }] },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+    }
+}
+
+function renderTasks() {
+    tasksContainer.innerHTML = '';
+    tasks.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item d-flex align-items-center';
+        const ratio = document.createElement('span');
+        ratio.className = 'me-2';
+        ratio.textContent = `${Math.floor(t.actual/60)}/${t.expected} min`;
+        const validate = document.createElement('button');
+        validate.className = 'btn btn-success btn-sm me-2';
+        validate.textContent = 'Valider';
+        validate.onclick = () => { t.done = true; saveTasks(); renderTasks(); };
+        const play = document.createElement('button');
+        play.className = 'btn btn-secondary btn-sm ms-auto me-2';
+        play.textContent = timers[t.id] ? 'Stop' : 'Play';
+        play.onclick = () => toggleTimer(t.id);
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-outline-secondary btn-sm';
+        editBtn.textContent = 'Modifier';
+        editBtn.onclick = () => openTaskEdit(t.id);
+        item.appendChild(ratio);
+        item.appendChild(validate);
+        item.appendChild(play);
+        item.appendChild(editBtn);
+        const info = document.createElement('span');
+        info.className = 'ms-2 flex-grow-1';
+        info.textContent = `${t.title} (${t.subject})`;
+        item.appendChild(info);
+        if (t.done) item.classList.add('opacity-50');
+        tasksContainer.appendChild(item);
+    });
+}
+
+taskForm?.addEventListener('submit', e => {
+    e.preventDefault();
+    const task = {
+        id: Date.now(),
+        title: document.getElementById('task-title').value,
+        subject: document.getElementById('task-subject').value,
+        description: document.getElementById('task-desc').value,
+        expected: parseInt(document.getElementById('task-expected').value,10),
+        actual: 0,
+        done: false,
+        start: document.getElementById('task-start').value
+    };
+    tasks.push(task);
+    saveTasks();
+    taskForm.reset();
+    renderTasks();
+});
+
+function openTaskEdit(id) {
+    const t = tasks.find(ts => ts.id === id);
+    if (!t) return;
+    currentTaskEditId = id;
+    document.getElementById('task-edit-title').value = t.title;
+    document.getElementById('task-edit-subject').value = t.subject;
+    document.getElementById('task-edit-desc').value = t.description;
+    document.getElementById('task-edit-expected').value = t.expected;
+    document.getElementById('task-edit-start').value = t.start;
+    taskEditModal.show();
+}
+
+taskEditForm?.addEventListener('submit', e => {
+    e.preventDefault();
+    const t = tasks.find(ts => ts.id === currentTaskEditId);
+    if (!t) return;
+    t.title = document.getElementById('task-edit-title').value;
+    t.subject = document.getElementById('task-edit-subject').value;
+    t.description = document.getElementById('task-edit-desc').value;
+    t.expected = parseInt(document.getElementById('task-edit-expected').value,10);
+    t.start = document.getElementById('task-edit-start').value;
+    saveTasks();
+    taskEditModal.hide();
+    renderTasks();
+});
+
+function toggleTimer(id) {
+    if (timers[id]) {
+        clearInterval(timers[id]);
+        delete timers[id];
+    } else {
+        timers[id] = setInterval(() => {
+            const t = tasks.find(ts => ts.id === id);
+            if (t) {
+                t.actual += 1;
+                saveTasks();
+                renderTasks();
+            }
+        }, 1000);
+    }
+    renderTasks();
 }
 
 form.addEventListener('submit', e => {
@@ -74,6 +209,10 @@ reviewButtons.forEach(btn => {
             const n = lesson.rate;
             const days = Math.ceil(Math.pow(k, n));
             lesson.nextReview = addDays(new Date(), days).toISOString().slice(0,10);
+            const today = new Date().toISOString().slice(0,10);
+            const rec = history.find(h => h.date === today);
+            if (rec) rec.count += 1; else history.push({date: today, count:1});
+            saveHistory();
             saveLessons();
             renderCalendar();
             renderStats();
@@ -203,4 +342,6 @@ toggleViewBtn.addEventListener('click', () => {
 
 // initial render
 renderCalendar();
+renderStats();
+renderTasks();
 renderStats();
