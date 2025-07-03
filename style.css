@@ -1,0 +1,33 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+}
+
+#calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    height: 500px;
+    overflow-y: auto;
+}
+
+.day {
+    min-height: 80px;
+}
+
+.month-view .day {
+    max-height: 110px;
+    overflow-y: auto;
+}
+
+.week-view .day {
+    height: auto;
+}
+
+.lesson {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
