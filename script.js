@@ -4,6 +4,13 @@ const currentPeriod = document.getElementById('current-period');
 const prevBtn = document.getElementById('prev');
 const nextBtn = document.getElementById('next');
 const toggleViewBtn = document.getElementById('toggle-view');
+const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+const reviewButtons = document.querySelectorAll('.review-choice');
+const editForm = document.getElementById('edit-form');
+
+let currentReviewId = null;
+let currentEditId = null;
 
 let lessons = JSON.parse(localStorage.getItem('lessons') || '[]');
 let currentDate = new Date();
@@ -15,12 +22,17 @@ function saveLessons() {
 
 form.addEventListener('submit', e => {
     e.preventDefault();
+    const dateVal = document.getElementById('date').value;
+    if (getLessonsForDay(dateVal).length >= 10) {
+        alert('Maximum de leçons atteint pour ce jour');
+        return;
+    }
     const lesson = {
         id: Date.now(),
         title: document.getElementById('title').value,
         subject: document.getElementById('subject').value,
         description: document.getElementById('description').value,
-        nextReview: document.getElementById('date').value,
+        nextReview: dateVal,
         rate: parseInt(document.getElementById('learningRate').value, 10)
     };
     lessons.push(lesson);
@@ -40,14 +52,54 @@ function addDays(date, days) {
 }
 
 function markReviewed(id) {
-    const lesson = lessons.find(l => l.id === id);
-    if (lesson) {
-        const next = addDays(new Date(), lesson.rate);
-        lesson.nextReview = next.toISOString().slice(0,10);
-        saveLessons();
-        renderCalendar();
-    }
+    currentReviewId = id;
+    reviewModal.show();
 }
+
+reviewButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const k = parseFloat(btn.getAttribute('data-value'));
+        const lesson = lessons.find(l => l.id === currentReviewId);
+        if (lesson) {
+            lesson.rate += 1;
+            const n = lesson.rate;
+            const days = Math.ceil(Math.pow(k, n));
+            lesson.nextReview = addDays(new Date(), days).toISOString().slice(0,10);
+            saveLessons();
+            renderCalendar();
+        }
+        reviewModal.hide();
+    });
+});
+
+function openEdit(id) {
+    const lesson = lessons.find(l => l.id === id);
+    if (!lesson) return;
+    currentEditId = id;
+    document.getElementById('edit-title').value = lesson.title;
+    document.getElementById('edit-subject').value = lesson.subject;
+    document.getElementById('edit-description').value = lesson.description;
+    document.getElementById('edit-date').value = lesson.nextReview;
+    editModal.show();
+}
+
+editForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const lesson = lessons.find(l => l.id === currentEditId);
+    if (!lesson) return;
+    const newDate = document.getElementById('edit-date').value;
+    if (lesson.nextReview !== newDate && getLessonsForDay(newDate).length >= 10) {
+        alert('Maximum de leçons atteint pour ce jour');
+        return;
+    }
+    lesson.title = document.getElementById('edit-title').value;
+    lesson.subject = document.getElementById('edit-subject').value;
+    lesson.description = document.getElementById('edit-description').value;
+    lesson.nextReview = newDate;
+    saveLessons();
+    editModal.hide();
+    renderCalendar();
+});
 
 function renderCalendar() {
     calendarGrid.innerHTML = '';
@@ -82,21 +134,27 @@ function renderCalendar() {
     days.forEach(d => {
         const dateStr = d.toISOString().slice(0,10);
         const dayDiv = document.createElement('div');
-        dayDiv.className = 'day';
+        dayDiv.className = 'day col border p-1';
         const header = document.createElement('div');
-        header.className = 'day-header';
+        header.className = 'day-header fw-bold';
         header.textContent = d.getDate();
         dayDiv.appendChild(header);
 
         const ls = getLessonsForDay(dateStr);
         ls.forEach(l => {
             const div = document.createElement('div');
-            div.className = 'lesson';
+            div.className = 'lesson bg-light border-start border-primary ps-1 mb-1 small';
             div.textContent = `${l.title} (${l.subject}) `;
-            const btn = document.createElement('button');
-            btn.textContent = 'Révisé';
-            btn.onclick = () => markReviewed(l.id);
-            div.appendChild(btn);
+            const revBtn = document.createElement('button');
+            revBtn.className = 'btn btn-sm btn-success ms-1';
+            revBtn.textContent = 'Révisé';
+            revBtn.onclick = () => markReviewed(l.id);
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-sm btn-outline-secondary ms-1';
+            editBtn.textContent = 'Modifier';
+            editBtn.onclick = () => openEdit(l.id);
+            div.appendChild(revBtn);
+            div.appendChild(editBtn);
             dayDiv.appendChild(div);
         });
 
