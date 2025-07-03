@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Révision Planner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Révision Planner</h1>
+
+    <section id="add-lesson">
+        <h2>Ajouter une leçon</h2>
+        <form id="lesson-form">
+            <label>Titre
+                <input type="text" id="title" required>
+            </label>
+            <label>Matière
+                <input type="text" id="subject" required>
+            </label>
+            <label>Description
+                <textarea id="description" required></textarea>
+            </label>
+            <label>Date de première révision
+                <input type="date" id="date" required>
+            </label>
+            <label>Taux d'apprentissage (en jours)
+                <input type="number" id="learningRate" min="1" value="1" required>
+            </label>
+            <button type="submit">Ajouter</button>
+        </form>
+    </section>
+
+    <section id="calendar">
+        <div class="controls">
+            <button id="prev">Précédent</button>
+            <span id="current-period"></span>
+            <button id="next">Suivant</button>
+            <button id="toggle-view">Changer de vue</button>
+        </div>
+        <div id="calendar-grid"></div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
