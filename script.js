@@ -1,7 +1,4 @@
-let form, calendarGrid, currentPeriod, prevBtn, nextBtn, toggleViewBtn,
-    reviewModal, editModal, taskEditModal, reviewButtons, editForm,
-    statsTotal, statsAverage, taskForm, tasksContainer, taskEditForm,
-    statsChartCanvas;
+
 
 let currentReviewId = null;
 let currentEditId = null;
@@ -11,7 +8,6 @@ let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 let timers = {};
 let history = JSON.parse(localStorage.getItem('history') || '[]');
 let statsChart = null;
-
 let lessons = JSON.parse(localStorage.getItem('lessons') || '[]');
 let currentDate = new Date();
 let view = 'month'; // or 'week'
@@ -82,14 +78,13 @@ function renderTasks() {
     });
 }
 
-function submitTask(e) {
+
     e.preventDefault();
     const task = {
         id: Date.now(),
         title: document.getElementById('task-title').value,
         subject: document.getElementById('task-subject').value,
         description: document.getElementById('task-desc').value,
-        expected: parseInt(document.getElementById('task-expected').value, 10),
         actual: 0,
         done: false,
         start: document.getElementById('task-start').value
@@ -98,7 +93,6 @@ function submitTask(e) {
     saveTasks();
     taskForm.reset();
     renderTasks();
-}
 
 function openTaskEdit(id) {
     const t = tasks.find(ts => ts.id === id);
@@ -112,19 +106,17 @@ function openTaskEdit(id) {
     taskEditModal.show();
 }
 
-function submitTaskEdit(e) {
+
     e.preventDefault();
     const t = tasks.find(ts => ts.id === currentTaskEditId);
     if (!t) return;
     t.title = document.getElementById('task-edit-title').value;
     t.subject = document.getElementById('task-edit-subject').value;
     t.description = document.getElementById('task-edit-desc').value;
-    t.expected = parseInt(document.getElementById('task-edit-expected').value, 10);
     t.start = document.getElementById('task-edit-start').value;
     saveTasks();
     taskEditModal.hide();
     renderTasks();
-}
 
 function toggleTimer(id) {
     if (timers[id]) {
@@ -142,8 +134,6 @@ function toggleTimer(id) {
     }
     renderTasks();
 }
-
-function addLesson(e) {
     e.preventDefault();
     const dateVal = document.getElementById('date').value;
     if (getLessonsForDay(dateVal).length >= 10) {
@@ -163,7 +153,6 @@ function addLesson(e) {
     form.reset();
     renderCalendar();
     renderStats();
-}
 
 function getLessonsForDay(dateStr) {
     return lessons.filter(l => l.nextReview === dateStr);
@@ -180,24 +169,6 @@ function markReviewed(id) {
     reviewModal.show();
 }
 
-function handleReview(e) {
-    const k = parseFloat(e.target.getAttribute('data-value'));
-    const lesson = lessons.find(l => l.id === currentReviewId);
-    if (lesson) {
-        lesson.rate += 1;
-        const n = lesson.rate;
-        const days = Math.ceil(Math.pow(k, n));
-        lesson.nextReview = addDays(new Date(), days).toISOString().slice(0, 10);
-        const today = new Date().toISOString().slice(0, 10);
-        const rec = history.find(h => h.date === today);
-        if (rec) rec.count += 1; else history.push({ date: today, count: 1 });
-        saveHistory();
-        saveLessons();
-        renderCalendar();
-        renderStats();
-    }
-    reviewModal.hide();
-}
 
 function openEdit(id) {
     const lesson = lessons.find(l => l.id === id);
@@ -211,7 +182,7 @@ function openEdit(id) {
     editModal.show();
 }
 
-function submitEdit(e) {
+
     e.preventDefault();
     const lesson = lessons.find(l => l.id === currentEditId);
     if (!lesson) return;
@@ -229,7 +200,7 @@ function submitEdit(e) {
     editModal.hide();
     renderCalendar();
     renderStats();
-}
+
 
 function renderCalendar() {
     calendarGrid.innerHTML = '';
@@ -295,74 +266,16 @@ function renderCalendar() {
     renderStats();
 }
 
-function prevPeriod() {
+
     if (view === 'week') {
         currentDate = addDays(currentDate, -7);
     } else {
         currentDate.setMonth(currentDate.getMonth() - 1);
     }
     renderCalendar();
-}
-
-function nextPeriod() {
     if (view === 'week') {
         currentDate = addDays(currentDate, 7);
     } else {
         currentDate.setMonth(currentDate.getMonth() + 1);
     }
     renderCalendar();
-}
-
-function toggleView() {
-    view = view === 'week' ? 'month' : 'week';
-    renderCalendar();
-}
-
-function initTabsPersistence() {
-    const saved = localStorage.getItem('activeTab');
-    if (saved) {
-        const trigger = document.querySelector(`button[data-bs-target="${saved}"]`);
-        if (trigger) new bootstrap.Tab(trigger).show();
-    }
-    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(btn => {
-        btn.addEventListener('shown.bs.tab', e => {
-            localStorage.setItem('activeTab', e.target.getAttribute('data-bs-target'));
-        });
-    });
-}
-
-function init() {
-    form = document.getElementById('lesson-form');
-    calendarGrid = document.getElementById('calendar-grid');
-    currentPeriod = document.getElementById('current-period');
-    prevBtn = document.getElementById('prev');
-    nextBtn = document.getElementById('next');
-    toggleViewBtn = document.getElementById('toggle-view');
-    reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-    editModal = new bootstrap.Modal(document.getElementById('editModal'));
-    taskEditModal = new bootstrap.Modal(document.getElementById('taskEditModal'));
-    reviewButtons = document.querySelectorAll('.review-choice');
-    editForm = document.getElementById('edit-form');
-    statsTotal = document.getElementById('stats-total');
-    statsAverage = document.getElementById('stats-average');
-    taskForm = document.getElementById('task-form');
-    tasksContainer = document.getElementById('tasks-container');
-    taskEditForm = document.getElementById('task-edit-form');
-    statsChartCanvas = document.getElementById('stats-chart');
-
-    form.addEventListener('submit', addLesson);
-    editForm.addEventListener('submit', submitEdit);
-    reviewButtons.forEach(btn => btn.addEventListener('click', handleReview));
-    taskForm.addEventListener('submit', submitTask);
-    taskEditForm.addEventListener('submit', submitTaskEdit);
-    prevBtn.addEventListener('click', prevPeriod);
-    nextBtn.addEventListener('click', nextPeriod);
-    toggleViewBtn.addEventListener('click', toggleView);
-
-    initTabsPersistence();
-    renderCalendar();
-    renderStats();
-    renderTasks();
-}
-
-document.addEventListener('DOMContentLoaded', init);
