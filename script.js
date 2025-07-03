@@ -1,23 +1,4 @@
-const form = document.getElementById('lesson-form');
-const calendarGrid = document.getElementById('calendar-grid');
-const currentPeriod = document.getElementById('current-period');
-const prevBtn = document.getElementById('prev');
-const nextBtn = document.getElementById('next');
-const toggleViewBtn = document.getElementById('toggle-view');
-const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-const editModal = new bootstrap.Modal(document.getElementById('editModal'));
 
-const taskEditModal = new bootstrap.Modal(document.getElementById('taskEditModal'));
-
-
-const reviewButtons = document.querySelectorAll('.review-choice');
-const editForm = document.getElementById('edit-form');
-const statsTotal = document.getElementById('stats-total');
-const statsAverage = document.getElementById('stats-average');
-const taskForm = document.getElementById('task-form');
-const tasksContainer = document.getElementById('tasks-container');
-const taskEditForm = document.getElementById('task-edit-form');
-const statsChartCanvas = document.getElementById('stats-chart');
 
 let currentReviewId = null;
 let currentEditId = null;
@@ -27,10 +8,6 @@ let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 let timers = {};
 let history = JSON.parse(localStorage.getItem('history') || '[]');
 let statsChart = null;
-
-let currentReviewId = null;
-let currentEditId = null;
-
 let lessons = JSON.parse(localStorage.getItem('lessons') || '[]');
 let currentDate = new Date();
 let view = 'month'; // or 'week'
@@ -38,7 +15,6 @@ let view = 'month'; // or 'week'
 function saveLessons() {
     localStorage.setItem('lessons', JSON.stringify(lessons));
 }
-
 
 function saveTasks() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
@@ -102,14 +78,13 @@ function renderTasks() {
     });
 }
 
-taskForm?.addEventListener('submit', e => {
+
     e.preventDefault();
     const task = {
         id: Date.now(),
         title: document.getElementById('task-title').value,
         subject: document.getElementById('task-subject').value,
         description: document.getElementById('task-desc').value,
-        expected: parseInt(document.getElementById('task-expected').value,10),
         actual: 0,
         done: false,
         start: document.getElementById('task-start').value
@@ -118,7 +93,6 @@ taskForm?.addEventListener('submit', e => {
     saveTasks();
     taskForm.reset();
     renderTasks();
-});
 
 function openTaskEdit(id) {
     const t = tasks.find(ts => ts.id === id);
@@ -132,19 +106,17 @@ function openTaskEdit(id) {
     taskEditModal.show();
 }
 
-taskEditForm?.addEventListener('submit', e => {
+
     e.preventDefault();
     const t = tasks.find(ts => ts.id === currentTaskEditId);
     if (!t) return;
     t.title = document.getElementById('task-edit-title').value;
     t.subject = document.getElementById('task-edit-subject').value;
     t.description = document.getElementById('task-edit-desc').value;
-    t.expected = parseInt(document.getElementById('task-edit-expected').value,10);
     t.start = document.getElementById('task-edit-start').value;
     saveTasks();
     taskEditModal.hide();
     renderTasks();
-});
 
 function toggleTimer(id) {
     if (timers[id]) {
@@ -162,8 +134,6 @@ function toggleTimer(id) {
     }
     renderTasks();
 }
-
-form.addEventListener('submit', e => {
     e.preventDefault();
     const dateVal = document.getElementById('date').value;
     if (getLessonsForDay(dateVal).length >= 10) {
@@ -183,7 +153,6 @@ form.addEventListener('submit', e => {
     form.reset();
     renderCalendar();
     renderStats();
-});
 
 function getLessonsForDay(dateStr) {
     return lessons.filter(l => l.nextReview === dateStr);
@@ -200,26 +169,6 @@ function markReviewed(id) {
     reviewModal.show();
 }
 
-reviewButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const k = parseFloat(btn.getAttribute('data-value'));
-        const lesson = lessons.find(l => l.id === currentReviewId);
-        if (lesson) {
-            lesson.rate += 1;
-            const n = lesson.rate;
-            const days = Math.ceil(Math.pow(k, n));
-            lesson.nextReview = addDays(new Date(), days).toISOString().slice(0,10);
-            const today = new Date().toISOString().slice(0,10);
-            const rec = history.find(h => h.date === today);
-            if (rec) rec.count += 1; else history.push({date: today, count:1});
-            saveHistory();
-            saveLessons();
-            renderCalendar();
-            renderStats();
-        }
-        reviewModal.hide();
-    });
-});
 
 function openEdit(id) {
     const lesson = lessons.find(l => l.id === id);
@@ -233,7 +182,7 @@ function openEdit(id) {
     editModal.show();
 }
 
-editForm.addEventListener('submit', e => {
+
     e.preventDefault();
     const lesson = lessons.find(l => l.id === currentEditId);
     if (!lesson) return;
@@ -251,7 +200,7 @@ editForm.addEventListener('submit', e => {
     editModal.hide();
     renderCalendar();
     renderStats();
-});
+
 
 function renderCalendar() {
     calendarGrid.innerHTML = '';
@@ -317,31 +266,16 @@ function renderCalendar() {
     renderStats();
 }
 
-prevBtn.addEventListener('click', () => {
+
     if (view === 'week') {
         currentDate = addDays(currentDate, -7);
     } else {
         currentDate.setMonth(currentDate.getMonth() - 1);
     }
     renderCalendar();
-});
-
-nextBtn.addEventListener('click', () => {
     if (view === 'week') {
         currentDate = addDays(currentDate, 7);
     } else {
         currentDate.setMonth(currentDate.getMonth() + 1);
     }
     renderCalendar();
-});
-
-toggleViewBtn.addEventListener('click', () => {
-    view = view === 'week' ? 'month' : 'week';
-    renderCalendar();
-});
-
-// initial render
-renderCalendar();
-renderStats();
-renderTasks();
-renderStats();
