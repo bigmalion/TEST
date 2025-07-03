@@ -6,7 +6,10 @@ const nextBtn = document.getElementById('next');
 const toggleViewBtn = document.getElementById('toggle-view');
 const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
 const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+
 const taskEditModal = new bootstrap.Modal(document.getElementById('taskEditModal'));
+
+
 const reviewButtons = document.querySelectorAll('.review-choice');
 const editForm = document.getElementById('edit-form');
 const statsTotal = document.getElementById('stats-total');
@@ -25,6 +28,9 @@ let timers = {};
 let history = JSON.parse(localStorage.getItem('history') || '[]');
 let statsChart = null;
 
+let currentReviewId = null;
+let currentEditId = null;
+
 let lessons = JSON.parse(localStorage.getItem('lessons') || '[]');
 let currentDate = new Date();
 let view = 'month'; // or 'week'
@@ -32,6 +38,7 @@ let view = 'month'; // or 'week'
 function saveLessons() {
     localStorage.setItem('lessons', JSON.stringify(lessons));
 }
+
 
 function saveTasks() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
@@ -337,3 +344,4 @@ toggleViewBtn.addEventListener('click', () => {
 renderCalendar();
 renderStats();
 renderTasks();
+renderStats();
